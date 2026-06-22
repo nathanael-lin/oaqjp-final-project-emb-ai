@@ -8,7 +8,8 @@ Task 2 requirement:
 - Return the `text` attribute of the HTTP response object (raw JSON string)
 """
 
-import requests
+import json
+from urllib import request
 
 
 def emotiondetector(text_to_analyze: str) -> str:
@@ -24,7 +25,7 @@ def emotiondetector(text_to_analyze: str) -> str:
     Returns
     -------
     str
-        The response.text value returned by the EmotionPredict service.
+        The response body decoded as text (equivalent to response.text).
     """
     url = (
         "https://sn-watson-emotion.labs.skills.network/"
@@ -44,7 +45,12 @@ def emotiondetector(text_to_analyze: str) -> str:
         }
     }
 
-    response = requests.post(url, headers=headers, json=payload, timeout=10)
+    data_bytes = json.dumps(payload).encode("utf-8")
 
-    # Task 2: return the text attribute of the response object (no parsing yet)
-    return response.text
+    http_request = request.Request(url, data=data_bytes, headers=headers, method="POST")
+
+    with request.urlopen(http_request, timeout=10) as response:
+        # Read bytes and decode to string, same idea as response.text
+        response_text = response.read().decode("utf-8")
+
+    return response_text
