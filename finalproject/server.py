@@ -28,8 +28,7 @@ def index():
 
 
 @app.route("/emotionDetector", methods=["GET", "POST"])
-# pylint: disable=invalid-name
-def emotionDetector():
+def emotionDetector():  # pylint: disable=invalid-name
     """
     Analyze emotions in the provided text and return a formatted message.
 
