@@ -1,15 +1,22 @@
 """
 Flask web application for the EmotionDetection package.
 
-Exposes a web form that sends text to the emotiondetector function
-and displays the emotion scores and dominant emotion.
+Uses templates/ and static/ located at the repository root.
 """
 
-from flask import Flask, render_template, request, jsonify
+import os
 
+from flask import Flask, render_template, request, jsonify
 from EmotionDetection import emotiondetector
 
-app = Flask(__name__)
+
+# Resolve paths to templates and static one level above this file
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(CURRENT_DIR)  # repo root
+TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 
 
 @app.route("/", methods=["GET"])
@@ -26,7 +33,7 @@ def emotionDetector():
     Endpoint called from the web page to analyze text emotions.
 
     Expects JSON body with key 'textToAnalyze'.
-    Returns a JSON response with a formatted message.
+    Returns JSON with a formatted message describing emotions.
     """
     data = request.get_json()
     text_to_analyze = data.get("textToAnalyze", "")
@@ -35,8 +42,8 @@ def emotionDetector():
     result = emotiondetector(text_to_analyze)
 
     # Build the formatted message:
-    # "For the given statement, the system response is anger X, disgust Y,
-    # fear Z, joy A and sadness B. The dominant emotion is <name>."
+    # For the given statement, the system response is anger A, disgust D,
+    # fear F, joy J and sadness S. The dominant emotion is <name>.
     message = (
         "For the given statement, the system response is "
         f"anger {result['anger']}, "
