@@ -1,39 +1,15 @@
-"""
-Emotion detection module for Watson NLP EmotionPredict service.
-
-Task 3 requirement:
-- Use the EmotionPredict endpoint (as in Task 2)
-- Parse the JSON response
-- Extract anger, disgust, fear, joy, sadness scores
-- Compute the dominant emotion (highest score)
-- Return a dictionary with those scores plus 'dominant_emotion'
-"""
-
 import json
 from urllib import request
 
 
 def emotiondetector(text_to_analyze: str) -> dict:
     """
-    Call the Watson NLP EmotionPredict endpoint with the given text,
-    then return the formatted result with individual emotion scores
-    and the dominant emotion.
+    Call the Watson NLP EmotionPredict endpoint with the given text.
 
-    Parameters
-    ----------
-    text_to_analyze : str
-        The input text that needs to be analyzed for emotions.
-
-    Returns
-    -------
-    dict
-        Dictionary with keys:
-        - 'anger'
-        - 'disgust'
-        - 'fear'
-        - 'joy'
-        - 'sadness'
-        - 'dominant_emotion'
+    On success:
+        Return dict with anger, disgust, fear, joy, sadness, dominant_emotion.
+    On HTTP 400 (blank/invalid text):
+        Return same dict structure with all values set to None.
     """
     url = (
         "https://sn-watson-emotion.labs.skills.network/"
@@ -55,18 +31,32 @@ def emotiondetector(text_to_analyze: str) -> dict:
 
     data_bytes = json.dumps(payload).encode("utf-8")
 
-    http_request = request.Request(url, data=data_bytes, headers=headers, method="POST")
+    http_request = request.Request(
+        url,
+        data=data_bytes,
+        headers=headers,
+        method="POST",
+    )
 
     with request.urlopen(http_request, timeout=10) as response:
+        status_code = response.getcode()
         response_text = response.read().decode("utf-8")
 
-    # ---- Task 3 formatting logic ----
+    # If the service reports bad request (e.g., blank input),
+    # return all keys with None as required by Task 7.
+    if status_code == 400:
+        return {
+            "anger": None,
+            "disgust": None,
+            "fear": None,
+            "joy": None,
+            "sadness": None,
+            "dominant_emotion": None,
+        }
 
-    # Convert JSON string to Python dictionary
+    # Normal Task-3 behaviour
     response_dict = json.loads(response_text)
 
-    # Navigate to the emotion scores
-    # structure: emotionPredictions[0]["emotion"]
     prediction = response_dict["emotionPredictions"][0]
     emotions = prediction["emotion"]
 
@@ -76,7 +66,6 @@ def emotiondetector(text_to_analyze: str) -> dict:
     joy_score = emotions["joy"]
     sadness_score = emotions["sadness"]
 
-    # Find dominant emotion (highest score)
     emotion_scores = {
         "anger": anger_score,
         "disgust": disgust_score,
@@ -87,8 +76,7 @@ def emotiondetector(text_to_analyze: str) -> dict:
 
     dominant_emotion = max(emotion_scores, key=emotion_scores.get)
 
-    # Return dictionary in required format
-    result = {
+    return {
         "anger": anger_score,
         "disgust": disgust_score,
         "fear": fear_score,
@@ -96,5 +84,3 @@ def emotiondetector(text_to_analyze: str) -> dict:
         "sadness": sadness_score,
         "dominant_emotion": dominant_emotion,
     }
-
-    return result
