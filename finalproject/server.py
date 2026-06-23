@@ -27,21 +27,27 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/emotionDetector", methods=["POST"])
+@app.route("/emotionDetector", methods=["GET", "POST"])
 def emotionDetector():
     """
     Endpoint called from the web page to analyze text emotions.
 
-    Expects JSON body with key 'textToAnalyze'.
-    Returns JSON with a formatted message describing emotions.
-    """
-    data = request.get_json()
-    text_to_analyze = data.get("textToAnalyze", "")
+    Supports:
+    - GET  /emotionDetector?textToAnalyze=...
+    - POST with JSON body {"textToAnalyze": "..."}
 
-    # Call the emotion detection function
+    Returns JSON with key 'response' containing a formatted message.
+    """
+    if request.method == "GET":
+        text_to_analyze = request.args.get("textToAnalyze", "")
+    else:
+        data = request.get_json(silent=True) or {}
+        text_to_analyze = data.get("textToAnalyze", "")
+
+    # Call the emotion detection function from the package
     result = emotiondetector(text_to_analyze)
 
-    # Build the formatted message:
+    # Build the formatted message required by the project brief:
     # For the given statement, the system response is anger A, disgust D,
     # fear F, joy J and sadness S. The dominant emotion is <name>.
     message = (
