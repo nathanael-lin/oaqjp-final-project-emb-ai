@@ -1,5 +1,5 @@
 import json
-from urllib import request
+from urllib import request, error
 
 
 def emotiondetector(text_to_analyze: str) -> dict:
@@ -38,23 +38,24 @@ def emotiondetector(text_to_analyze: str) -> dict:
         method="POST",
     )
 
-    with request.urlopen(http_request, timeout=10) as response:
-        status_code = response.getcode()
-        response_text = response.read().decode("utf-8")
+    try:
+        with request.urlopen(http_request, timeout=10) as response:
+            response_text = response.read().decode("utf-8")
+    except error.HTTPError as http_err:
+        # Task 7: handle 400 Bad Request (e.g., blank input)
+        if http_err.code == 400:
+            return {
+                "anger": None,
+                "disgust": None,
+                "fear": None,
+                "joy": None,
+                "sadness": None,
+                "dominant_emotion": None,
+            }
+        # For any other HTTP error, re-raise (or you could choose to return None)
+        raise
 
-    # If the service reports bad request (e.g., blank input),
-    # return all keys with None as required by Task 7.
-    if status_code == 400:
-        return {
-            "anger": None,
-            "disgust": None,
-            "fear": None,
-            "joy": None,
-            "sadness": None,
-            "dominant_emotion": None,
-        }
-
-    # Normal Task-3 behaviour
+    # Normal Task-3 behaviour for successful responses
     response_dict = json.loads(response_text)
 
     prediction = response_dict["emotionPredictions"][0]
