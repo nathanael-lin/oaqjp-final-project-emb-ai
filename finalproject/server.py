@@ -32,11 +32,8 @@ def emotionDetector():
     """
     Endpoint called from the web page to analyze text emotions.
 
-    Supports:
-    - GET  /emotionDetector?textToAnalyze=...
-    - POST with JSON body {"textToAnalyze": "..."}
-
-    Returns JSON with key 'response' containing a formatted message.
+    If dominant_emotion is None (blank/invalid input), returns
+    'Invalid text! Please try again!'.
     """
     if request.method == "GET":
         text_to_analyze = request.args.get("textToAnalyze", "")
@@ -44,12 +41,12 @@ def emotionDetector():
         data = request.get_json(silent=True) or {}
         text_to_analyze = data.get("textToAnalyze", "")
 
-    # Call the emotion detection function from the package
     result = emotiondetector(text_to_analyze)
 
-    # Build the formatted message required by the project brief:
-    # For the given statement, the system response is anger A, disgust D,
-    # fear F, joy J and sadness S. The dominant emotion is <name>.
+    if result["dominant_emotion"] is None:
+        # Task 7 error message for blank input
+        return jsonify({"response": "Invalid text! Please try again!"})
+
     message = (
         "For the given statement, the system response is "
         f"anger {result['anger']}, "
